@@ -82,7 +82,12 @@ offsfile=open('offset.txt','w',1) # line buffered
 sw_avg=[]
 last_offset=0.0
 last_offset_sample=0
-  
+
+last_tic=0
+last_tic_offset=0
+last_pps=0
+last_pps_offset=0
+
 #for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
 while True:
   try:
@@ -121,11 +126,17 @@ while True:
                   print '{0:09d} {1:f} PPS {2:7d} {3:f}'.format(
                       sample_count,float(sample_count)/avg_rate,
                       sample_count-last_right,float(sample_count-last_right)/avg_rate)
-              sys.stdout.write( '{0:09d} {1:f} PPS {2:7d} {3:f}\r'.format(
+              #    
+              last_pps=sample_count-last_right
+              last_pps_offset=float(last_pps)/avg_rate
+              last_right= sample_count
+              #
+              sys.stdout.write( '{0:09d} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f}\r'.format(
                 sample_count,float(sample_count)/avg_rate,
-                sample_count-last_right,float(sample_count-last_right)/avg_rate))
+                last_pps,last_pps_offset,
+                last_tic,last_tic_offset))
               sys.stdout.flush()
-              last_right= sample_count               
+              #
               right_count+=1
               # update sample rate referenced to PPS pulses
               if right_count >= 10:
@@ -136,7 +147,7 @@ while True:
               if 0 == first_left:
                   first_left=sample_count
               cur_clock=float(sample_count)/avg_rate
-
+              #
               # check for missing PPS pulse
               if sample_count - last_right > MISSED_PULSE:
                   print '{0:09d} {1:f} PPS REFERENCE UNLOCK'.format(
@@ -156,20 +167,25 @@ while True:
                          print '{0:09d} {1:f} tic {2:7d} {3:f}'.format(
                              sample_count,cur_clock,
                              sample_count-last_right,offset)
-                     sys.stdout.write('{0:09d} {1:f} tic {2:7d} {3:f}\r'.format(
-                             sample_count,cur_clock,
-                             sample_count-last_right,offset))
+                     #
+                     last_tic=(sample_count-last_right)
+                     last_tic_offset=offset
+                     #
+                     sys.stdout.write( '{0:09d} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f}\r'.format(
+                       sample_count,float(sample_count)/avg_rate,
+                       last_pps,last_pps_offset,
+                       last_tic, last_tic_offset ))
                      sys.stdout.flush()
                      # log tick data to file
                      tickfile.write('{0:09d} {1:f} tic {2:7d} {3:f}\n'.format(
                          sample_count,cur_clock,
                          sample_count-last_right,offset))
-
+                     #
                      # sliding window average over inhibition period
                      sw_avg.append(offset)
                      if INHIBITION == len(sw_avg):
                          avg_offset=math.fsum(sw_avg)/float(INHIBITION)
-                         print '{0:09d} {1:f} offset {2:f}'.format(
+                         print '\n{0:09d} {1:f} offset {2:f}'.format(
                              sample_count,cur_clock,avg_offset)
                          offsfile.write('{0:09d} {1:f} offset {2:f}\n'.format(
                              sample_count,cur_clock,avg_offset))
@@ -182,7 +198,7 @@ while True:
                                  sample_count, cur_clock, rate, rate*86400.0, rate*86400.0*365.0)
                          last_offset_sample=sample_count
                          last_offset=avg_offset
-              last_left= sample_count               
+              last_left=sample_count               
               left_count+=1
         sample_num+=1
         sample_count+=1
