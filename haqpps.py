@@ -1,4 +1,12 @@
 
+# (C) 2015 John Isham <isham.john@gmail.com>
+# All rights reserved
+# free for non-commercial use
+# please report any fixes or improvements back to me
+# free for use as a tool to regulate watches as a hobby or commerically, but
+# this software cannot be sold or incorporated into a commercial product
+# without my written authorization
+
 # some help from
 #https://gist.githubusercontent.com/Jach/6361147/raw/c91a311f9d3e83bb11d2d3f65457650e9b624965/audio_trigger.py
 '''
@@ -14,17 +22,20 @@ import wave
 import numpy
 import math
 
+#from __future__ import print_function
+import sys
+
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 192000
 RECORD_SECONDS = 15
 #WAVE_OUTPUT_FILENAME = "output.wav"
-INHIBITION=10
+#INHIBITION=10
 #INHIBITION=60 
-#INHIBITION=480
+INHIBITION=480
 
-VERBOSE=2
+VERBOSE=0
 
 left_channel = 0
 right_channel = 1
@@ -110,6 +121,10 @@ while True:
                   print '{0:09d} {1:f} PPS {2:7d} {3:f}'.format(
                       sample_count,float(sample_count)/avg_rate,
                       sample_count-last_right,float(sample_count-last_right)/avg_rate)
+              sys.stdout.write( '{0:09d} {1:f} PPS {2:7d} {3:f}\r'.format(
+                sample_count,float(sample_count)/avg_rate,
+                sample_count-last_right,float(sample_count-last_right)/avg_rate))
+              sys.stdout.flush()
               last_right= sample_count               
               right_count+=1
               # update sample rate referenced to PPS pulses
@@ -133,16 +148,22 @@ while True:
                   right_count=0
               else:
                  offset=float(sample_count-last_right)/avg_rate
+                 # normalize/un-wrap to +- 0.5 second from reference pulse
+                 if offset > 0.5:
+                   offset=offset-1.0
                  if offset < MISSED_PULSE:
                      if VERBOSE >=1:
                          print '{0:09d} {1:f} tic {2:7d} {3:f}'.format(
                              sample_count,cur_clock,
-                             sample_count-last_right,float(sample_count-last_right)/avg_rate)
-
+                             sample_count-last_right,offset)
+                     sys.stdout.write('{0:09d} {1:f} tic {2:7d} {3:f}\r'.format(
+                             sample_count,cur_clock,
+                             sample_count-last_right,offset))
+                     sys.stdout.flush()
                      # log tick data to file
                      tickfile.write('{0:09d} {1:f} tic {2:7d} {3:f}\n'.format(
                          sample_count,cur_clock,
-                         sample_count-last_right,float(sample_count-last_right)/avg_rate))
+                         sample_count-last_right,offset))
 
                      # sliding window average over inhibition period
                      sw_avg.append(offset)
