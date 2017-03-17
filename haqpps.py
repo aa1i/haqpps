@@ -25,6 +25,7 @@ import pyaudio
 import wave
 import numpy
 import math
+import time
 
 #from __future__ import print_function
 import sys
@@ -127,16 +128,16 @@ while True:
               if 0 == first_right:
                   first_right=sample_count
               if VERBOSE >= 2:
-                  print '{0:09d} {1:f} PPS {2:7d} {3:f}'.format(
-                      sample_count,float(sample_count)/avg_rate,
+                  print '{0:f} {1:f} PPS {2:7d} {3:f}'.format(
+                      time.time(),float(sample_count)/avg_rate,
                       sample_count-last_right,float(sample_count-last_right)/avg_rate)
               #    
               last_pps=sample_count-last_right
               last_pps_offset=float(last_pps)/avg_rate
               last_right= sample_count
               #
-              sys.stdout.write( '{0:09d} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f}\r'.format(
-                sample_count,float(sample_count)/avg_rate,
+              sys.stdout.write( '{0:f} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f}\r'.format(
+                time.time(),float(sample_count)/avg_rate,
                 last_pps,last_pps_offset,
                 last_tic,last_tic_offset))
               sys.stdout.flush()
@@ -154,8 +155,8 @@ while True:
               #
               # check for missing PPS pulse
               if sample_count - last_right > MISSED_PULSE:
-                  print '{0:09d} {1:f} PPS REFERENCE UNLOCK'.format(
-                      sample_count,cur_clock)
+                  print '{0:f} {1:f} PPS REFERENCE UNLOCK'.format(
+                      time.time(),cur_clock)
                   # TODO - reset counters/stats!!
                   sw_avg=[]
                   last_right=0
@@ -168,38 +169,38 @@ while True:
                    offset=offset-1.0
                  if offset < MISSED_PULSE:
                      if VERBOSE >=1:
-                         print '{0:09d} {1:f} tic {2:7d} {3:f}'.format(
-                             sample_count,cur_clock,
+                         print '{0:f} {1:f} tic {2:7d} {3:f}'.format(
+                             time.time(),cur_clock,
                              sample_count-last_right,offset)
                      #
                      last_tic=(sample_count-last_right)
                      last_tic_offset=offset
                      #
-                     sys.stdout.write( '{0:09d} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f}\r'.format(
-                       sample_count,float(sample_count)/avg_rate,
+                     sys.stdout.write( '{0:f} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f}\r'.format(
+                       time.time(),float(sample_count)/avg_rate,
                        last_pps,last_pps_offset,
                        last_tic, last_tic_offset ))
                      sys.stdout.flush()
                      # log tick data to file
-                     tickfile.write('{0:09d} {1:f} tic {2:7d} {3:f}\n'.format(
-                         sample_count,cur_clock,
+                     tickfile.write('{0:f} {1:f} tic {2:7d} {3:f}\n'.format(
+                         time.time(),cur_clock,
                          sample_count-last_right,offset))
                      #
                      # sliding window average over inhibition period
                      sw_avg.append(offset)
                      if INHIBITION == len(sw_avg):
                          avg_offset=math.fsum(sw_avg)/float(INHIBITION)
-                         print '\n{0:09d} {1:f} offset {2:f}'.format(
-                             sample_count,cur_clock,avg_offset)
-                         offsfile.write('{0:09d} {1:f} offset {2:f}\n'.format(
-                             sample_count,cur_clock,avg_offset))
+                         print '\n{0:f} {1:f} offset {2:f}'.format(
+                             time.time(),cur_clock,avg_offset)
+                         offsfile.write('{0:f} {1:f} offset {2:f}\n'.format(
+                             time.time(),cur_clock,avg_offset))
                          sw_avg=[]
                          # primitive rate calc based on last two inihibition periods only
                          # better results will be obtained from linear fit to more offset data over longer timebase
                          if last_offset_sample > 0:
                              rate=float(avg_offset-last_offset)*avg_rate/float(sample_count-last_offset_sample)
-                             print '{0:09d} {1:f} rate {2:e} spd {3:f} spy {4:f}'.format(
-                                 sample_count, cur_clock, rate, rate*86400.0, rate*86400.0*365.0)
+                             print '{0:f} {1:f} rate {2:e} spd {3:f} spy {4:f}'.format(
+                                 time.time(), cur_clock, rate, rate*86400.0, rate*86400.0*365.0)
                          last_offset_sample=sample_count
                          last_offset=avg_offset
               last_left=sample_count               
