@@ -51,42 +51,10 @@ print_usage (char *progname)
 } /* print_usage */
 
 static void
-convert_to_text (SNDFILE * infile, FILE * outfile, int channels)
-{	float buf [channels * BLOCK_SIZE] ;
-	int k, m, readcount ;
-
-	int block_count = 0;
-	int sample_count = 0;
-	double max[channels];
-
-	memset( max, 0, sizeof(max) );
-	
-	while ((readcount = sf_readf_float (infile, buf, BLOCK_SIZE)) > 0)
-	{
-	  block_count++;
-	  for (k = 0 ; k < readcount ; k++)
-		{
-		  sample_count++;
-		  fprintf (outfile, " %04d %07d", block_count, sample_count) ;
-		  for (m = 0 ; m < channels ; m++)
-		    {
-		      if ( fabs(buf [k * channels + m])  > max[m]  )
-			max[m] = fabs(buf [k * channels + m]);
-		      fprintf (outfile, " % 12.10f (% 12.10f)",
-			       buf [k * channels + m], max[m] ) ;
-		    }
-		  fprintf (outfile, "\n") ;
-		} ;
-	} ;
-
-	return ;
-} /* convert_to_text */
-
-static void
 find_ticks (SNDFILE * infile, FILE * outfile, int channels, int sample_rate)
 {
   float buf [channels * BLOCK_SIZE] ;
-  int k, m, readcount ;
+  int k, m, readcount;
 
   int sample_count = 0;
   double max[channels];
@@ -96,17 +64,25 @@ find_ticks (SNDFILE * infile, FILE * outfile, int channels, int sample_rate)
   double thresh[channels];
   int tick_count[channels];
 
-  double sw_avg[480];
+#define INHIBITION_PERIOD 480
+  double sw_avg[INHIBITION_PERIOD];
   int sw_index=0;
   int i;
   double sum;
-	
+  double last_avg, last_time;
+
+  double meas_offset;
+  double cur_clock;
+  
+  
   memset( max, 0, sizeof(max) );
   memset( last_tick, 0, sizeof(last_tick) );
   memset( delta, 0, sizeof(delta) );
   memset( tick_count, 0, sizeof(tick_count) );
   memset( sw_avg, 0 , sizeof(sw_avg) );
-	
+  last_avg = 0.0;
+  last_time = 0.0;
+  
   /* TODO - add auto-thresh based on max amplitude seen */
   thresh[0]=0.5; /* ch 0 = left  = watch */
   thresh[1]=0.1; /* ch 1 = Right = PPS */
@@ -125,79 +101,104 @@ find_ticks (SNDFILE * infile, FILE * outfile, int channels, int sample_rate)
 	
   while ((readcount = sf_readf_float (infile, buf, BLOCK_SIZE)) > 0)
     {
-  for (k = 0 ; k < readcount ; k++)
+      for (k = 0 ; k < readcount ; k++)
+	{
+	  sample_count++;
+
+	  for (m = 0 ; m < channels ; m++)
+	    {
+	      /* track maximum amplitude */
+	      if ( fabs(buf [k * channels + m])  > max[m]  )
+		max[m] =  fabs(buf [k * channels + m]);
+
+	      /* look for a reference pulse, or a watch tick */ 
+	      if ( fabs(buf [k * channels + m])  > thresh[m]  )
 		{
-		  sample_count++;
+		  /* mark first tick */
+		  if (  0 == first_tick[m] )
+		    first_tick[m]=sample_count;
 
-		  for (m = 0 ; m < channels ; m++)
+		  /* TODO - add variable no-trigger timing? */
+		  /* REF = 100msec pulse, but AC coupling makes it appear as two pulses over 200msec */
+		  if ( ((sample_count - last_tick[m]) > (sample_rate/4))  ||
+		       ( 0 == last_tick[m] ))
 		    {
-		      if ( fabs(buf [k * channels + m])  > max[m]  )
-			max[m] =  fabs(buf [k * channels + m]);
+		      tick_count[m]++;
+		      delta[m] = sample_count - last_tick[m];
+
+		      cur_clock = (double)sample_count / (double)sample_rate;
 		      
-		      if ( fabs(buf [k * channels + m])  > thresh[m]  )
+		      if ( delta[m] > (3 * sample_rate / 2) )
+			fprintf( stderr, "%09d %014.9f ch%d MISSED PULSE %09d\n",
+				 sample_count, cur_clock, m+1, delta);
+
+		      last_tick[m] = sample_count;
+		      if ( MEAS_CHAN == m )
 			{
-  if (  0 == first_tick[m] )
-    first_tick[m]=sample_count;
+			  printf ( "%09d %014.9f tic:%05d %6d (%11.9f) ref:%05d %6d (%11.9f) offs:% 6d (% 11.9f)\r",
+				   sample_count, cur_clock, 
+				   tick_count[MEAS_CHAN], delta[MEAS_CHAN], (double)delta[MEAS_CHAN] / (double)sample_rate,
+				   tick_count[REF_CHAN],  delta[REF_CHAN],  (double)delta[REF_CHAN]  / (double)sample_rate,
+				   sample_count - last_tick[REF_CHAN], (double)(sample_count - last_tick[REF_CHAN]) / (double)delta[REF_CHAN] );
 
-			  /* TODO - add variable no-trigger timing? */
-			  /* REF = 100msec pulse, but AC coupling makes it appear as two pulses over 200msec */
-			  if ( ((sample_count - last_tick[m]) > (sample_rate/4))  ||
-                               ( 0 == last_tick[m] ))
+			  meas_offset = (double)(sample_count - last_tick[REF_CHAN]) / sample_rate_avg;
+			  
+			  fprintf ( outfile, "OFF: %014.9f % 11.9f\n",
+				    cur_clock, meas_offset );
+
+			  /* store offset in sliding window average buffer */
+			  sw_avg[sw_index++] = meas_offset;
+
+			  /* calculate average over exact inhibition period */
+			  if ( INHIBITION_PERIOD  == sw_index )
 			    {
-                              tick_count[m]++;
-			      delta[m] = sample_count - last_tick[m];
-
-			      if ( delta[m] > (3 * sample_rate / 2) )
-				fprintf( stderr, "%08d %014.9f ch%d MISSED PULSE %09d\n",
-					 sample_count, (double)sample_count / (double)sample_rate, m+1, delta);
-
-			      last_tick[m] = sample_count;
-			      if ( 0 == m )
+			      double new_avg;
+			      double new_time;
+			      
+			      sw_index=0;
+			      sum=0;
+			      for ( i = 0; i<INHIBITION_PERIOD; i++)
 				{
-                                  printf ( "%08d %014.9f ch%d tic:%05d %6d (%11.9f) ref:%05d %6d (%11.9f) offs:% 6d (% 11.9f)\r",
-                                           sample_count, (double)sample_count / (double)sample_rate,
-                                            m+1,
-					tick_count[0], delta[0], (double)delta[0] / (double)sample_rate,
-					tick_count[1], delta[1], (double)delta[1] / (double)sample_rate,
-					sample_count - last_tick[1], (double)(sample_count - last_tick[1]) / (double)delta[1] );
+				  sum += sw_avg[i];
+				}
+			      new_avg = sum / (double)INHIBITION_PERIOD;
+			      new_time = cur_clock;
+			      
+			      if ( last_time > 1.0 )
+				printf("\n%09d %014.9f AVG:%11.9f s/d:% 6.3f s/y:% 6.2f\n",
+				       sample_count, new_time, new_avg ,
+				       (new_avg - last_avg) / (new_time - last_time ) * 86400.0,
+				       (new_avg - last_avg) / (new_time - last_time ) * 86400.0 * 365.0 );
+			      else
+				printf("\n%09d %014.9f AVG:%11.9f\n",
+				       sample_count, new_time, new_avg );
+			      last_avg = new_avg;
+			      last_time = new_time;
+			    } /* END IF (end of an inhibition period) */
+			} /* END IF (watch tick) */
+		    } /* END IF (new pulse detected) */
+		} /* END IF (above pulse threshold) */
+	    } /* END FOR (all channels) */
+	} /* END FOR (all samples in buffer) */
+    } /* END WHILE (more buffers in file) */
 
-  				fprintf ( outfile, "OFF: %014.9f % 11.9f\n",
-					  (double)sample_count / (double)sample_rate,
-    (double)(sample_count - last_tick[1]) / sample_rate_avg );
-				sw_avg[sw_index++] = (double)(sample_count - last_tick[1]) / sample_rate_avg ;
-				if ( 480 == sw_index )
-				  {
-  sum=0;
-  for ( i = 0; i<480; i++)
-    {
-  sum += sw_avg[i];
-}
-  printf("OFF: %014.9f % 11.9f  avg_offset:%11.9f\n",
-    (double)sample_count / (double)sample_rate,
-    (double)(sample_count - last_tick[1]) / sample_rate_avg, sum/(double)480 );
-                                }
-                               }
-                             }
-			}
-		    } 
-		}
-	}
-	printf ( "max amplitude: %11.9f %11.9f\n",max[0],max[1]);
-	printf ( "time resolution: %11.9f\n",1.0/(double)sample_rate);
-	printf ( "tick count: %04d %04d\n",tick_count[0],tick_count[1]);
-	printf ( "sample_rate_avg: %14.9f\n",sample_rate_avg);
+  printf("\n");
+  printf ( "max amplitude: %11.9f %11.9f\n",max[0],max[1]);
+  printf ( "time resolution: %11.9f\n",1.0/(double)sample_rate);
+  printf ( "tick count: %04d %04d\n",tick_count[0],tick_count[1]);
+  printf ( "sample_rate_avg: %14.9f\n",sample_rate_avg);
 
-	for ( m=0; m < channels; m++)
-	  if ( 1 == tick_count[m] )
-	    fprintf ( stderr, "ch: %d only 1 tick detected, cannot perform math\n",m);
-	  else 
-	    printf ( "ch: %d ticks:%05d first:%08d last:%08d avg: %8.6f (%11.9f)\n",
-		     m, tick_count[m], first_tick[m], last_tick[m],
-		     (last_tick[m] - first_tick[m]) / ((double)tick_count[m] - 1),
-		     (last_tick[m] - first_tick[m]) / (((double)tick_count[m] - 1) * (double)(sample_rate)) );
+  for ( m=0; m < channels; m++)
+    if ( 1 == tick_count[m] )
+      fprintf ( stderr, "ch: %d only 1 tick detected, cannot perform math\n",m);
+    else 
+      printf ( "ch: %d ticks:%05d first:%08d last:%08d avg: %8.6f (%11.9f)\n",
+	       m, tick_count[m], first_tick[m], last_tick[m],
+	       (last_tick[m] - first_tick[m]) / ((double)tick_count[m] - 1),
+	       (last_tick[m] - first_tick[m]) / (((double)tick_count[m] - 1) * (double)(sample_rate)) );
 
-	return ;
-} /* convert_to_text */
+  return ;
+} 
 
 int
 main (int argc, char * argv [])
