@@ -1,11 +1,15 @@
 
-# (C) 2015 John Isham <isham.john@gmail.com>
+# (C) 2015-2016 John Isham <isham.john@gmail.com>
 # All rights reserved
 # free for non-commercial use
 # please report any fixes or improvements back to me
 # free for use as a tool to regulate watches as a hobby or commerically, but
 # this software cannot be sold or incorporated into a commercial product
 # without my written authorization
+
+# 2016-02 Added status timing output
+# 2016-01 Added primitive, and not totally correct fix
+#   for offset wrapping across a second boundary
 
 # some help from
 #https://gist.githubusercontent.com/Jach/6361147/raw/c91a311f9d3e83bb11d2d3f65457650e9b624965/audio_trigger.py
