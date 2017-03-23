@@ -147,7 +147,7 @@ class App:
         self.measure_button.config(state='disabled')
         self.test.config(state='normal')
         print ("measure START")
-        proc = subprocess.Popen(["python","haqpps4.py"])
+        proc = subprocess.Popen(["python","haqpps.py"])
         print ("measure return")
         self.subprocs.append( proc )
 
