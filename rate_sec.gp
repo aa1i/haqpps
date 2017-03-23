@@ -6,7 +6,7 @@ date=system("date +%Y-%b-%d")
 #watch='Longines VHP Ti Cal 174.2 ETA 255.561'
 watch='Longines VHP PC Cal L1.627.3'
 #watch='Longines VHP Cal 174.2 ETA 255.561'
-limit=2.0  # VHP
+#limit=2.0  # VHP
 
 #watch='Chr.Ward C7 Rapide Chronograph Mk2 v390 / Chronometer (ETA 251.264 COSC)'
 #limit=10.0 # COSC
@@ -14,9 +14,13 @@ limit=2.0  # VHP
 #watch='Certina DS-2 3-hand Precidrive ETA F06.411'
 #limit=10.0 # PreciDrive
 
-#inhib=10
+# HAQ?
+limit=15
+
+watch='Citzen Alterna "02-Blue" V010-5984 Cal 0610?'
+inhib=10
 #inhib=60
-inhib=480
+#inhib=480
 #inhib=960
 
 
