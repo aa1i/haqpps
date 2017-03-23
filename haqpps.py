@@ -142,10 +142,10 @@ class Haq:
     if 0 == self.first_pps_sample:
       self.first_pps_sample = self.sample_count
     if VERBOSE >= 2:
-      print '{0:f} {1:f} PPS {2:7d} {3:f}'.format(
+      print ('{0:f} {1:f} PPS {2:7d} {3:f}'.format(
         time.time(), float( self.sample_count ) / self.avg_rate,
         self.sample_count - self.last_pps_sample,
-        float( self.sample_count - self.last_pps_sample ) / self.avg_rate )
+        float( self.sample_count - self.last_pps_sample ) / self.avg_rate ) )
     #    
     self.last_pps = self.sample_count - self.last_pps_sample
     self.last_pps_offset = float(self.last_pps) / self.avg_rate
@@ -167,8 +167,8 @@ class Haq:
     self.sw_avg.append(self.offset + self.cycle)
     if INHIBITION <= len(self.sw_avg):
       avg_offset=math.fsum(self.sw_avg)/float(INHIBITION)
-      print '\n{0:f} {1:f} offset {2:f}'.format(
-        time.time(), self.cur_clock, avg_offset)
+      print ('\n{0:f} {1:f} offset {2:f}'.format(
+        time.time(), self.cur_clock, avg_offset) )
       self.offsfile.write('{0:f} {1:f} offset {2:f}\n'.format(
         time.time(), self.cur_clock, avg_offset))
       # reset average for next iteration
@@ -180,8 +180,8 @@ class Haq:
                 /  float( self.sample_count - self.last_avg_sample ) )
         # invert sign in rate calc to match real world convention (fast clock - decreasing offset)
         rate *= -1.0
-        print '{0:f} {1:f} rate {2:e} spd {3:f} spy {4:f}'.format(
-          time.time(), self.cur_clock, rate, rate * 86400.0, rate * 86400.0 * 365.0)
+        print ('{0:f} {1:f} rate {2:e} spd {3:f} spy {4:f}'.format(
+          time.time(), self.cur_clock, rate, rate * 86400.0, rate * 86400.0 * 365.0) )
       self.last_avg_sample = self.sample_count
       self.last_avg = avg_offset
   # END Haq.inhition_avg()
@@ -193,8 +193,8 @@ class Haq:
     #
     # check for missing PPS pulse
     if self.sample_count - self.last_pps_sample > self.GATE_STOP:
-      print '{0:f} {1:f} PPS REFERENCE UNLOCK'.format(
-        time.time(), self.cur_clock)
+      print ( '{0:f} {1:f} PPS REFERENCE UNLOCK'.format(
+        time.time(), self.cur_clock) )
       # reset counters/stats!!
       self.sw_avg = []
       self.last_pps_sample = 0
@@ -224,25 +224,25 @@ class Haq:
       if (self.offset >= 0.98) and (self.last_tic_offset <= 0.02):
         self.cycle -= 1
         if VERBOSE >= 1:
-          print 'offset: {0:f} last: {1:f} -1 cycle {2:d}'.format(
+          print ('offset: {0:f} last: {1:f} -1 cycle {2:d}'.format(
             self.offset, self.last_tic_offset,
-            self.cycle)
+            self.cycle) )
       elif (self.offset <= 0.02) and (self.last_tic_offset >= 0.98):
         self.cycle += 1
         if VERBOSE >= 1:
-          print 'offset: {0:f} last: {1:f} +1 cycle {2:d}'.format(
+          print ( 'offset: {0:f} last: {1:f} +1 cycle {2:d}'.format(
             self.offset, self.last_tic_offset,
-            self.cycle)
+            self.cycle) )
       # 1) self.offset is divided by self.avg_rate, but self.GATE_STOP isn't,
       #    so this is probably always true
       # 2) self.sample_count - self.last_pps_sample > self.GATE_STOP is tested above,
       #    so this is always true (unless lf.sample_count - self.last_pps_sample == self.GATE_STOP )
       if self.offset <= (self.GATE_STOP // RATE):
         if VERBOSE >=1:
-          print '{0:f} {1:f} tic {2:7d} {3:f} {4:d} {5:f}'.format(
+          print ('{0:f} {1:f} tic {2:7d} {3:f} {4:d} {5:f}'.format(
             time.time(), self.cur_clock,
             self.sample_count - self.last_pps_sample,
-            self.offset, self.cycle, self.offset + self.cycle)
+            self.offset, self.cycle, self.offset + self.cycle) )
         #
         #self.offset = self.offset + self.cycle
         self.last_tic = (self.sample_count - self.last_pps_sample)
@@ -283,11 +283,11 @@ class Haq:
           self.sample_count+=1
 
       except KeyboardInterrupt: 
-        print "Caught KeyboardInterrupt" 
+        print ("Caught KeyboardInterrupt" )
         self.exit=True
         break;
       except IOError:
-        print "Caught IOError" 
+        print ("Caught IOError" )
         self.exit=True
         break;
   # END Haq.measure()
@@ -296,12 +296,12 @@ class Haq:
     self.tickfile.close()
     self.offsfile.close()
 
-    print
-    print "Avg rate:",self.avg_rate
-    print "PPS count:",self.pps_count
-    print "tic count:",self.wut_count
-    print "max PPS ampl:",self.pps_max
-    print "max tic ampl:",self.wut_max
+    print ()
+    print ("Avg rate:",self.avg_rate)
+    print ("PPS count:",self.pps_count)
+    print ("tic count:",self.wut_count)
+    print ("max PPS ampl:",self.pps_max)
+    print ("max tic ampl:",self.wut_max)
 
     #wf = wave.open(WAVE_OUTPUT_FILENAME, 'wb')
     #wf.setnchannels(CHANNELS)
