@@ -6,7 +6,7 @@ http://www.dk0tu.de/users/DL5BBN/Python_Amateur_Radio_Programs/
 """
 
 import pyaudio
-#import struct
+import struct
 #import math
 #import array
 import numpy as np
@@ -17,77 +17,101 @@ import matplotlib.animation as animation
 #import pylab
 #import cv2
 
-CHANNELS = 2
+CHANNELS = 1 #2
+#CHANNELS = 2
 RATE = 192000  #Sampling Rate in Hz
-CHUNK = RATE   #Blocksize in samples, time basis for the display
-WIDTH = 2      #2 bytes per sample
+#CHUNK = 192 * 1024 #Blocksize in samples, time basis for the display
+#CHUNK = 192 * 1000 #Blocksize in samples, time basis for the display
+CHUNK = RATE * CHANNELS #Blocksize in samples, time basis for the display
+WIDTH = 2 #2 bytes per sample
+RECORD_SECONDS = 10
 
 
+fig, ax = plt.subplots()
 
-x = np.arange(0, RATE) * 1000  / RATE      # x-array
+#http://matplotlib.org/examples/pylab_examples/subplots_demo.html#pylab-examples-subplots-demo
+# Two subplots, the axes array is 1-d
+f, axarr = plt.subplots(2, sharex=True)
+axarr[0].plot(x, y)
+axarr[0].set_title('Sharing X axis')
+axarr[1].scatter(x, y)
 
-# http://stackoverflow.com/questions/29832055/animated-subplots-using-matplotlib
-# create a figure with two subplots
-#fig, (ax1, ax2) = plt.subplots(2,1)
-fig, (ax1, ax2) = plt.subplots(2,sharex=True)
+# http://matplotlib.org/examples/animation/subplots.html
+fig = plt.figure()
+ax1 = fig.add_subplot(1, 2, 1)
+ax2 = fig.add_subplot(2, 2, 2)
+ax3 = fig.add_subplot(2, 2, 4)
 
-# intialize two line objects (one in each axes)
-line1, = ax1.plot([], [], lw=2)
-line2, = ax2.plot([], [], lw=2, color='r')
-line = [line1, line2]
+# http://jakevdp.github.io/blog/2012/08/18/matplotlib-animation-tutorial/
+#fig = plt.figure()
+#ax = plt.axes(xlim=(0, 2), ylim=(-2, 2))
+#line, = ax.plot([], [], lw=2)
 
-ax1.set_ylim( -1.0, 1.0)
-ax2.set_ylim( -1.0, 1.0)
+plt.ylabel('amplitude (a.u.)')
+plt.xlabel('time (samples)')
 
-ax1.set_xlim(0, 1000)
-ax2.set_xlim(0, 1000)
+#left_plot = plt.subplot(211)
+#right_plot = plt.subplot(212)
 
-ax1.grid(True)
-ax2.grid(True)
+x = np.arange(0, CHUNK)       # x-array
+#x = np.arange(0, CHUNK) / CHUNK       # x-array
 
-ax1.set_xlabel('Time (msec)')
-ax1.set_ylabel('Stepper')
+#Scale axis as this sine function:
+line, = ax.plot(x, 20000.0*np.sin(x))
+#line, = ax.plot(x, float(np.iinfo(np.int16).max)*np.sin(x))
+#line, = ax.plot([-float(np.iinfo(np.int16).max), float(np.iinfo(np.int16).max)] )
+#left_line,right_line = ax.plot(x, 20000.0*np.sin(x), x, 20000.0*np.sin(x))
 
-ax2.set_xlabel('Time (msec)')
-ax2.set_ylabel('PPS Reference')
-
+plt.axis([0, RATE, -float(np.iinfo(np.int16).max), float(np.iinfo(np.int16).max)])
 
 def animate(i):
     # update the data
     #Reading from audio input stream into data with block length "CHUNK":
     data = stream.read(CHUNK)
-
     #Convert from stream of bytes to a list of short integers (2 bytes here) in "samples":
     #shorts = (struct.unpack( "128h", data ))
-    #shorts = (struct.unpack( 'h' * CHUNK*2, data ));
-    #samples=np.array(list(shorts),dtype=float);
-    # decode/deinterleave soundard samples
-    decoded = np.fromstring(data,"Int16")
-    # Normalize by int16 max (32767) for convenience, also converts everything to floats
-    normed_samples = decoded / float(np.iinfo(np.int16).max)
+    shorts = (struct.unpack( 'h' * CHUNK, data ));
+    samples=np.array(list(shorts),dtype=float);
 
-    left_samples = normed_samples[0::2]
-    right_samples = normed_samples[1::2]
+    #left_samples= samples[0::2]
+    #right_samples= samples[1::2]
+    
+    #plt.plot(samples)  #<-- here goes the signal processing.
+    #line.set_ydata(np.log((np.abs(pylab.fft(samples))+0.1))/np.log(10.0))
+    line.set_ydata(samples)
+    #line.set_ydata(left_samples)
+    #left_line.set_ydata(left_samples)
+    #right_line.set_ydata(right_samples)
 
-    line1.set_data(x,left_samples)
-    line2.set_data(x,right_samples)
-
-    return line
+    return line,
+    #return left_line,right_line
 
 def init():
-    line1, = ax1.plot([], [], lw=2)
-    line2, = ax2.plot([], [], lw=2, color='r')
+    line.set_ydata(np.ma.array(x, mask=True))
+    #left_line.set_ydata(np.ma.array(x, mask=True))
+    #right_line.set_ydata(np.ma.array(x, mask=True))
 
-    return line
+    return line,
+    #return left_line,right_line
 
 
 p = pyaudio.PyAudio()
+
+#a = p.get_device_count()
+#print("device count=",a)
+
+#for i in range(0, a):
+ #   print("i = ",i)
+ #   b = p.get_device_info_by_index(i)['maxInputChannels']
+ #   print(b)
+ #   b = p.get_device_info_by_index(i)['defaultSampleRate']
+ #   print(b)
 
 stream = p.open(format=p.get_format_from_width(WIDTH),
                 channels=CHANNELS,
                 rate=RATE,
                 input=True,
-                #output=True,
+                output=True,
                 #input_device_index=3,
                 frames_per_buffer=CHUNK)
 
