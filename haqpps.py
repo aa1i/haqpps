@@ -154,6 +154,10 @@ class Haq:
   # END Haq.pps_tick();
 
   def inhibition_avg(self):
+    # Note: while the offsets have a logical sign convention,
+    # this tends to generate the negative of the wacth rate as viewed by the rest of the world
+    # i.e. -  increasing offset ref PPS means a slow clock which should be a negative rate
+    # and decreasing offset REF PPS means a fast clock which should be a positive rate.
     self.sw_avg.append(self.offset)
     if INHIBITION <= len(self.sw_avg):
       avg_offset=math.fsum(self.sw_avg)/float(INHIBITION)
@@ -165,6 +169,7 @@ class Haq:
       # primitive rate calc based on last two inihibition periods only
       # better results will be obtained from linear fit to more offset data over longer timebase
       if self.last_offset_sample > 0:
+        # TODO - invert sign in rate calc
         rate=float(avg_offset-self.last_offset)*self.avg_rate/float(self.sample_count-self.last_offset_sample)
         print '{0:f} {1:f} rate {2:e} spd {3:f} spy {4:f}'.format(
           time.time(), self.cur_clock, rate, rate*86400.0, rate*86400.0*365.0)
@@ -187,9 +192,13 @@ class Haq:
       self.first_right=0
       self.right_count=0
     else:
+      # Note: while the offsets have a logical sign convention,
+      # this tends to generate the negative of the wacth rate as viewed by the rest of the world
+      # i.e. -  increasing offset ref PPS means a slow clock which should be a negative rate
+      # and decreasing offset REF PPS means a fast clock which should be a positive rate.
       self.offset=float(self.sample_count-self.last_right)/self.avg_rate
       # normalize/un-wrap to +- 0.5 second from reference pulse
-      # TODO - this could be much improved, and add tracking across second boundaries
+      # TODO - this could be *much* improved, and add tracking across second boundaries
       if self.offset > 0.5:
         self.offset=self.offset-1.0
       # 1) self.offset is divided by self.avg_rate, but self.GATE_STOP isn't,
@@ -225,7 +234,7 @@ class Haq:
         self.grab_audio()
 
         # detect pulses
-        # we can probable replace sample_num with right below,
+        # we can probably replace sample_num with right below,
         # but since we use the same index for the left/tic data,
         # sample_num is more straightforward
         self.sample_num = 0
