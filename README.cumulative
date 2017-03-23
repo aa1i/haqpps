@@ -1,0 +1,37 @@
+the measurement script only measures fractional second offset from the PPS pulse. It needs outside input (user with a stopwatch) to measure the integer second offset from true time.
+
+This can be stored per-watch in collection.py in the "int_seconds" field for each watch entries info dictionary.
+
+The measurement script will read this and apply it, if configured correctly. It will also attempt to track it across integer seconds boundaries if it drifts.
+
+The correction can be done manually on the offset.txt data using awk,
+
+$ tail offset.txt 
+1490293680.127028 163334.108778 offset 0.105832
+1490294160.128325 163814.108747 offset 0.105801
+1490294640.123638 164294.108721 offset 0.105772
+1490295120.125735 164774.108695 offset 0.105740
+1490295600.122899 165254.108659 offset 0.105710
+1490296080.124145 165734.108633 offset 0.105679
+1490296560.123855 166214.108591 offset 0.105649
+1490297040.122178 166694.108565 offset 0.105619
+1490297520.123870 167174.108539 offset 0.105588
+1490298000.122478 167654.108508 offset 0.105558
+
+$ awk '{print $1 " " $2 " " $3 " " (0 - $4)}' offset.txt >> offset_cumulative.txt
+                                    ^--- integer seconds offset
+$ tail offset_cumulative.txt 
+1490294160.128325 163814.108747 offset -0.105801
+1490294640.123638 164294.108721 offset -0.105772
+1490295120.125735 164774.108695 offset -0.10574
+1490295600.122899 165254.108659 offset -0.10571
+1490296080.124145 165734.108633 offset -0.105679
+1490296560.123855 166214.108591 offset -0.105649
+1490297040.122178 166694.108565 offset -0.105619
+1490297520.123870 167174.108539 offset -0.105588
+1490298000.122478 167654.108508 offset -0.105558
+1490298480.122250 168134.108476 offset -0.105527
+
+these offset_cumulative.txt files can be concatenated and passed to rate_cumulative.py. Theyhave absolute unix time codes, and if the integer seconds is set properly, they will attempt to fit an average rate to all available (sparse) offset data. [picture worth a thousand words, add one here]
+
+sign convention: the measurment script (haqpps) historically and currently uses the wrong sign convention for the offset. This is currently corrected in the rate_*.py plot routines, so that a fast watch is correct displayed with a + rate. The (int - $4) field in the awk script above also corrects this.  This should be fixed in a future rev, but requires synchronously changing several scripts at a time when my measurment station is not in use. "Real Soon Now"....
