@@ -1,4 +1,4 @@
-# (C) 2015-2016 John Isham <isham.john@gmail.com>
+# (C) 2015-2017 John Isham <isham.john@gmail.com>
 # All rights reserved
 # free for non-commercial use
 # please report any fixes or improvements back to me
@@ -6,6 +6,8 @@
 # this software cannot be sold or incorporated into a commercial product
 # without my written authorization
 
+# 2017-03 audio filtering
+# 2016    major refactor/cleanup
 # 2016-02 Added status timing output
 # 2016-01 Added primitive, and not totally correct fix
 #   for offset wrapping across a second boundary
@@ -26,8 +28,10 @@ import numpy
 import math
 import time
 
-#from __future__ import print_function
 import sys
+
+# for filtering
+from scipy.signal import *
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
@@ -43,8 +47,6 @@ VERBOSE=0
 
 left_channel = 0
 right_channel = 1
-
-# window to flag a missed pulse - 1.05 seconds, in integer samples
 
 class Haq:
   def __init__(self):
@@ -75,7 +77,7 @@ class Haq:
     self.GATE_STOP = 105 * RATE // 100
 
     # window of valid offsets when tracking across integer second "cycle" boundary
-    self.CYCLE_EDGE_LOW  = 0.02
+    self.CYCLE_EDGE_LOW  = 0.03
     self.CYCLE_EDGE_HIGH = 1.0 - self.CYCLE_EDGE_LOW
     
     self.wut_thresh=0.5
@@ -97,6 +99,16 @@ class Haq:
     self.last_pps=0
     self.last_pps_offset=0
     self.cycle=0
+
+    self.filter_audio = 0
+    if self.filter_audio:
+      # 100 Hz highpass filter
+      nyq=RATE/2.0
+      self.hi_b, self.hi_a = butter(5, 100./nyq, btype='high')
+      self.lo_b, self.lo_a = butter(5, 100./nyq, btype='low')
+
+      self.hi_zi = lfilter_zi( self.hi_b, self.hi_a)
+      self.lo_zi = lfilter_zi( self.lo_b, self.lo_a)
     
     self.exit = False
   # END Haq.init()
@@ -114,8 +126,18 @@ class Haq:
     # and normalizing the thresholds instead, but this seems to keep up just fine on my machine
     normed_samples = decoded / float(numpy.iinfo(numpy.int16).max)
     # TODO - instead of list pick/copy, can use use something more python-ish, like zip()?
-    self.wut_samples = normed_samples[left_channel ::2]
-    self.pps_samples = normed_samples[right_channel::2]
+    left_norm  = normed_samples[left_channel::2]
+    right_norm = normed_samples[right_channel::2]
+
+    # filtering
+    # left = stepper = high-pass
+    # right = reference = low-pass
+    if self.filter_audio:
+      self.wut_samples, self.hi_zi  = lfilter( self.hi_b, self.hi_a, left_norm , zi=self.hi_zi )
+      self.pps_samples, self.lo_zi  = lfilter( self.lo_b, self.lo_a, right_norm, zi=self.lo_zi )
+    else:
+      self.wut_samples = normed_samples[left_channel ::2]
+      self.pps_samples = normed_samples[right_channel::2]
 
     # track maximum amplitude per channel
     # is maximum tracking still useful, or can this be deleted for performance?
@@ -221,13 +243,13 @@ class Haq:
       # Do we need a complementary negative check? offset never negative?
       if (self.offset > 1.0): self.offset -= 1
       # self.CYCLE_EDGE_LOW, self.CYCLE_EDGE_HIGH
-      if (self.offset >= 0.98) and (self.last_tic_offset <= 0.02):
+      if (self.offset >= 0.97) and (self.last_tic_offset <= 0.03):
         self.cycle -= 1
         if VERBOSE >= 1:
           print ('offset: {0:f} last: {1:f} -1 cycle {2:d}'.format(
             self.offset, self.last_tic_offset,
             self.cycle) )
-      elif (self.offset <= 0.02) and (self.last_tic_offset >= 0.98):
+      elif (self.offset <= 0.03) and (self.last_tic_offset >= 0.97):
         self.cycle += 1
         if VERBOSE >= 1:
           print ( 'offset: {0:f} last: {1:f} +1 cycle {2:d}'.format(
