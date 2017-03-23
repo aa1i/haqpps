@@ -3,9 +3,14 @@ date=system("date +%Y-%b-%d")
 
 # watch info
 
+# 01 Ti
 #watch='Longines VHP Ti Cal 174.2 ETA 255.561'
-watch='Longines VHP PC Cal L1.627.3'
-#watch='Longines VHP Cal 174.2 ETA 255.561'
+# 02
+#watch='Longines VHP "02" Cal 174.2 ETA 255.561'
+# 03 PC
+#watch='Longines VHP PC Cal L1.627.3'
+# 06 PC S/N 28727869
+watch='Longines VHP PC "06" Cal L1.627.4'
 limit=2.0  # VHP
 
 #watch='Chr.Ward C7 Rapide Chronograph Mk2 v390 / Chronometer (ETA 251.264 COSC)'
