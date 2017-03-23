@@ -16,6 +16,15 @@ vhp_14_info = { "name":'Longines VHP Ti "14" Cal 174.? S/N 22222759',
 
 watch_info.append(vhp_14_info)
 
+vhp_16_info = { "name":'Longines VHP PC "16" Cal L1.636.4 ETA 252.611? S/N 29593258',
+                "inhib":480,
+                "limit":2.0,
+                "int_seconds":0.0
+            }
+
+watch_info.append(vhp_16_info)
+
+
 # 01 Ti
 #watch='Longines VHP Ti "01" Cal 174.2 ETA 255.561'
 # 02
@@ -35,12 +44,9 @@ watch_info.append(vhp_14_info)
 # 11 lost in mail
 # 12 ti un-recorded
 #watch='Longines VHP ti "12" Cal TBD '
-# 13 PC "blue"
-#watch='Longines VHP PC "13" Cal L1.636.4 ETA 252.611 S/N 29206563'
-# 14 ti
-#watch='Longines VHP Ti "14" Cal 174.? S/N 22222759'
 # 15 PC
 #watch='Longines VHP PC "15" Cal L1.636.4 ETA ?252.531? S/N 29206269'
 
+
 def get_current_watch_info():
-    return vhp_14_info
+    return vhp_16_info
