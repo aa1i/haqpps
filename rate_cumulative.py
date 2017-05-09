@@ -43,7 +43,7 @@ def read_ticks(filename="ticks.txt"):
     # scale by 86400 sec/day
     tick_x=( ticks[:,0] - x0 ) / 86400.
     # y = PPS/offset data
-    tick_y=watch_info["int_seconds"] - ticks[:,1]
+    tick_y=watch_info["int_seconds"] + ticks[:,1]
 
     return tick_x, tick_y, x0
 
@@ -91,7 +91,7 @@ def calc_rate( offs_x, offs_y):
     print ("Intercept: {:.6f} sec".format(fit[1]))
 
     # fit[0] holds linear-fit rate (in s/d, convert to s/y)
-    spy= fit[0] * 365.
+    spy= -1.0 * fit[0] * 365.
     print ("Rate: {} spy".format(spy))
 
     return fit, fit_x, fit_fn, spy

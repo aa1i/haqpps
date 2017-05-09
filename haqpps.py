@@ -6,6 +6,7 @@
 # this software cannot be sold or incorporated into a commercial product
 # without my written authorization
 
+# 2017-05 attempting to fix sign errors
 # 2017-03 audio filtering
 # 2016    major refactor/cleanup
 # 2016-02 Added status timing output
@@ -98,9 +99,12 @@ class Haq:
     self.last_tic_offset=0
     self.last_pps=0
     self.last_pps_offset=0
-    self.cycle=0
+    # TODO - find a way to read this from etiher
+    #   a: int_seconds in the collection.py class
+    #   b: an entry in the tk GUI, possibly set from a: above
+    self.cycle=-1
 
-    self.filter_audio = 0
+    self.filter_audio = True
     if self.filter_audio:
       # 100 Hz highpass filter
       nyq=RATE/2.0
@@ -134,7 +138,8 @@ class Haq:
     # right = reference = low-pass
     if self.filter_audio:
       self.wut_samples, self.hi_zi  = lfilter( self.hi_b, self.hi_a, left_norm , zi=self.hi_zi )
-      self.pps_samples, self.lo_zi  = lfilter( self.lo_b, self.lo_a, right_norm, zi=self.lo_zi )
+      #self.pps_samples, self.lo_zi  = lfilter( self.lo_b, self.lo_a, right_norm, zi=self.lo_zi )
+      self.pps_samples = normed_samples[right_channel::2]
     else:
       self.wut_samples = normed_samples[left_channel ::2]
       self.pps_samples = normed_samples[right_channel::2]
@@ -156,7 +161,7 @@ class Haq:
       time.time(), float(self.sample_count) / self.avg_rate,
       self.last_pps, self.last_pps_offset,
       self.last_tic, self.last_tic_offset,
-      self.cycle, self.last_tic_offset + self.cycle) )
+      self.cycle, self.cycle + self.last_tic_offset ) )
     sys.stdout.flush()
   # END Haq.print_ppc_tick()
     
@@ -186,7 +191,7 @@ class Haq:
     # this tends to generate the negative of the wacth rate as viewed by the rest of the world
     # i.e. -  increasing offset ref PPS means a slow clock which should be a negative rate
     # and decreasing offset REF PPS means a fast clock which should be a positive rate.
-    self.sw_avg.append(self.offset + self.cycle)
+    self.sw_avg.append(self.cycle + self.offset)
     if INHIBITION <= len(self.sw_avg):
       avg_offset=math.fsum(self.sw_avg)/float(INHIBITION)
       print ('\n{0:f} {1:f} offset {2:f}'.format(
@@ -264,7 +269,7 @@ class Haq:
           print ('{0:f} {1:f} tic {2:7d} {3:f} {4:d} {5:f}'.format(
             time.time(), self.cur_clock,
             self.sample_count - self.last_pps_sample,
-            self.offset, self.cycle, self.offset + self.cycle) )
+            self.offset, self.cycle, self.cycle + self.offset) )
         #
         #self.offset = self.offset + self.cycle
         self.last_tic = (self.sample_count - self.last_pps_sample)
@@ -276,10 +281,12 @@ class Haq:
         # log tick data to file
         self.tickfile.write('{0:f} {1:f} tic {2:7d} {3:f}\n'.format(
           time.time(), self.cur_clock,
-          self.sample_count - self.last_pps_sample , self.offset + self.cycle))
+          self.sample_count - self.last_pps_sample , self.cycle + self.offset))
         #
         # sliding window average over inhibition period
-        self.inhibition_avg()
+        # skip first couple of samples
+        if self.cur_clock > 2:
+          self.inhibition_avg()
     self.last_wut_sample = self.sample_count               
     self.wut_count += 1
   # END Haq.clock_tick()

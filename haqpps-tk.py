@@ -7,8 +7,8 @@ from tkinter import ttk
 from time import sleep
 import time
 
-import rate_day
-import rate_cumulative
+#import rate_day
+#import rate_cumulative
 #import pps_amp_filt
 import subprocess
 #import popen
@@ -130,7 +130,7 @@ class App:
 
     def wave_scope(self):
         print ("wave_scope START")
-        proc = subprocess.Popen(["python","pps_amp_filt.py"])
+        proc = subprocess.Popen(["python","pps-amp-filt.py"])
         print ("wave_scope return")
         self.scope_subprocs.append( proc )
         
