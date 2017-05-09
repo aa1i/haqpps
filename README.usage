@@ -1,0 +1,49 @@
+TBD: required hardware
+GPS/PPS/antenna, voltage divider, optional LED, connectors/wires. 
+pickup - phone couple, AM antenna, DIY coil, connectors wires
+GPS configure (PPS width, drop on unlock)
+
+TBD: required packages
+pyaudio
+tkinter (builtin?)
+matplotlib (builtin?)
+numpy/scipy
+others....
+
+launch:
+python3 haqpps-tk.py 
+
+TBD watch info in collection.py, or set through tkinter GUI
+(inhibition period, integer seconds offset, rate limit boundaries. name/SN/ref/movement)
+
+TBD audio filtering disable, freq adjust?
+[100Hz HPF/lowcut works well for my 60Hz hum, and seems to be a nice cutoff for LPF on PPS too - likely a function of 100ms pulse width?]
+
+Level scope button to align pickup and set levels
+pps-amp.py / pps-amp-filt.py launched
+[TBD/DIY OS dependent source select and level adjustment]
+>thresh (0.5?)
+
+TBD - set (rough) sample rate of soundcard
+measure button to begin measurement
+
+ticks.txt - raw ticks
+offset.txt - inhibition period averages
+
+auto adjust sample rate via PPS
+
+
+plot rate button, use matplotlib zoom/save buttons
+linear fit rate to all available offsets
+
+awk to correct offset.txt (see README.cumulative)
+
+TBD: auto correct
+TBD: leap seconds?
+
+manual concatenate offset.txt files to offset_cumulative.txt
+
+plot cumulative button (reads offset_cumulative.txt)
+use matplotlib zoom/save buttons
+
+kill scope, kill measure, close plots, quit buttons
