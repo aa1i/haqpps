@@ -4,23 +4,6 @@ from datetime import datetime, date, time
 import collection
 
 def get_watch_info():
-    #watch_info = dict()
-
-    # 13 PC "blue"
-    #watch_info["name"]='Longines VHP PC "13" Cal L1.636.4 ETA 252.611 S/N 29206563'
-
-    #inhib=10
-    #inhib=60
-    #watch_info["inhib"]=480
-    #inhib=960
-
-    #watch_info["limit"]=2.0  # VHP
-    #limit=10.0 # COSC
-    #limit=10.0 # PreciDrive
-
-    # integer number of seconds watch is offset [ceil(offset)]
-    #watch_info["int_seconds"]=0.0
-    
     return collection.get_current_watch_info()
 
 def read_ticks(filename="ticks.txt"):
