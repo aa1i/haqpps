@@ -34,6 +34,8 @@ import sys
 # for filtering
 from scipy.signal import *
 
+import collection
+
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
@@ -102,7 +104,9 @@ class Haq:
     # TODO - find a way to read this from etiher
     #   a: int_seconds in the collection.py class
     #   b: an entry in the tk GUI, possibly set from a: above
-    self.cycle=-1
+    #self.cycle=-1
+    self.watch_info = collection.get_current_watch_info()
+    self.cycle = watch_info["int_seconds"]
 
     self.filter_audio = True
     if self.filter_audio:
