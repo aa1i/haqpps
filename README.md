@@ -102,6 +102,9 @@ optional equipment
 - the `offset.txt` entries contain a unix timestamp for each average, enabling data time registration
 - `offset.txt` is over-written every time `haqpps.py` is run. `offset.txt` must be renamed to preserve it
 - concatenate offset.txt and older offsets.  You can use whatever naming convention you like, but I like to include the watch name and date stamps in the filename
+- `rate_cumulative.py` reads from the file `offset_cumulative.txt`
+
+[ ] sample plots of single run and cumulative
 
 #### Examples
 
@@ -115,7 +118,7 @@ create new "previous" cumulative (after terminating a measurement run):
 
 ## Configuation
 
-- Edit watch list in collection.py.
+- Edit watch list in `collection.py`.
 - Individual watch details can be loaded by selecting the watch in the `haqpps-tk.py` GUI before starting the measurement.
 - Integer seconds offset can set here as well.
 - The information for the current watch is saved to a file, which is read by the measurement (`haqpps.py`) and rate plotting (`rate_day.py` and `rate_cumulative.py`) scripts
