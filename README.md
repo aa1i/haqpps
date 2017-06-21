@@ -31,11 +31,12 @@ TBD - link to WUS threads
 ## Requires
 
 - python 3 (used to work on Python 2, probably still could with mininal effort)
-- pyadio
+- pyaudio
 - tkinter
 - numpy
 - scipy
 - matplotlib
+- pickle (builtin?)
 
 mostly builtins. Perhaps some basic Python package installtion? Should be portable. Tested on Linux, but should work on windows.
 
@@ -68,10 +69,16 @@ python3 haqpps-tk.py
 - channels can be flipped in software
 - Optional filtering on audio - 100 Hz HPF attenuates much ambient noise and 60 Hz AC hum.  Filtering on PPS reference seems to only add timing jitter.
 - make sure GPS has a lock
+- adjust soundcard gains and/or external pots/amps/gain
 - multiple instances can run, but why would you?
 
-
 [ ]  Add image of reasonable levels
+
+### Select watch information
+
+1. inhibition period
+2. integer seconds / cycle offset (from stopwatch measurements)
+3. watch "name" - include useful info - model name/num, serial num, personalized "name"
 
 ### Measure Rate
 
@@ -92,10 +99,35 @@ python3 haqpps-tk.py
 
 - concatenate offset.txt and older offsets.  Timestamps including, measurement gaps handled
 
+cat previous cumulative with current (normal usage):
+
+`cat vhp_16_pc_adj04_off01_cumul11_2017_0620.txt offset.txt > offset_cumulative.txt`
+
+create new "previous" cumulative (after terminating a measurement run):
+
+`cat vhp_16_pc_adj04_off01_cumul10_2017_0619.txt offset.txt > vhp_16_pc_adj04_off01_cumul11_2017_0620.txt`
+
 ## Configuation
 
 collection.py
 
+
+
 ## TODO
 
 [ ] make watch selection/parameters work rather than pulling hardcoded values from collection.py
+[ ] pass parameters to modules via local file/"pickle"
+[ ] pass parameters via getopt
+[ ] automatically pass integer seconds / cycle offset from measurement to watch data
+[ ] aids to concatenating offset files for cumulative plots.  Possible selection of base/current/cumulative file names
+
+## known issues
+
+[ ] the first inhibition average seems to be skewed. Possibly a single zero sample leaking in, probably an off-by-one error somewhere.  It averages out in the long run, but short term averages are skewed by the error.
+
+
+### Notes
+
+- regenerating the html version of this markdown file on Linux:
+
+`pandoc README.md > README.html`
