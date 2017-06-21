@@ -13,6 +13,8 @@ import time
 import subprocess
 #import popen
 
+import collection 
+
 class App:
     def __init__(self, master):
 
@@ -31,7 +33,10 @@ class App:
         watch_frame.pack(side=TOP)
 
         inhib_frame = Frame(info_frame)
-        inhib_frame.pack(side=LEFT)
+        inhib_frame.pack(side=TOP)
+        
+        intsec_frame = Frame(info_frame)
+        intsec_frame.pack(side=TOP)
         
         
         # bottom_frame elements
@@ -68,20 +73,23 @@ class App:
 
         # info_frame elements
         self.watch_name = StringVar()
-        self.watch_name.set("Longines VHP PC Cal L1.627.3")
         Label( watch_frame, text="Watch: ").pack(side=LEFT)
         #Entry( watch_frame, textvariable=self.watch_name, width=30).pack(side=LEFT)
         watch_combo = ttk.Combobox( watch_frame, textvariable=self.watch_name, width=70)
-        watch_combo['values']=( 'Longines VHP PC Cal L1.627.3',
-            'Longines VHP Ti Cal 174.2 ETA 255.561',
-            'Longines VHP Cal 174.2 ETA 255.561',
-            'Chr.Ward C7 Rapide Chronograph Mk2 v390 / Chronometer (ETA 251.264 COSC)',
-            'Certina DS-2 3-hand Precidrive ETA F06.411',
-            'Citzen Alterna "02-Blue" V010-5984 Cal 0610?' )
+        #watch_combo['values']=( 'Longines VHP PC Cal L1.627.3',
+        #    'Longines VHP Ti Cal 174.2 ETA 255.561',
+        #    'Longines VHP Cal 174.2 ETA 255.561',
+        #    'Chr.Ward C7 Rapide Chronograph Mk2 v390 / Chronometer (ETA 251.264 COSC)',
+        #    'Certina DS-2 3-hand Precidrive ETA F06.411',
+        #    'Citzen Alterna "02-Blue" V010-5984 Cal 0610?' )
+        watch_names= [ w['name'] for w in collection.watch_info ]
+        watch_combo['values'] = watch_names
+        self.watch_name.set( watch_names[-1] )
+        self.watch_combo_index = len(watch_names) -1
         watch_combo.pack(side=LEFT)
         # name = self.watch_name.get()
 
-        Button(watch_frame, text="Show Info", command=self.show_info).pack(side=RIGHT)
+        Button(watch_frame, text="Get Info", command=self.get_info).pack(side=RIGHT)
 
         self.inhib_period = IntVar()
         self.inhib_period.set(480)
@@ -92,6 +100,17 @@ class App:
         Radiobutton(inhib_frame, text="480", variable=self.inhib_period, value=480).pack(side=LEFT)
         Radiobutton(inhib_frame, text="960", variable=self.inhib_period, value=960).pack(side=LEFT)
 
+        # integer seconds / cycle offset
+        lab = Label( intsec_frame, width=15, text="integer seconds: ", anchor='w')
+        self.intsec_entry = Entry(intsec_frame)
+        self.intsec_entry.insert(0,"0")
+        intsec_frame.pack(side=TOP, fill=X, padx=5, pady=5)
+        lab.pack(side=LEFT)
+        #self.intsec_entry.pack(side=RIGHT, expand=YES, fill=X)
+        self.intsec_entry.pack(side=LEFT)
+        Button( intsec_frame, text="Apply", command=self.set_int_seconds).pack(side=LEFT)
+
+
         # initialize sub-process lists
         self.subprocs=[]
         self.plot_subprocs=[]
@@ -100,10 +119,29 @@ class App:
     def say_hi(self):
         print ("hi there, everyone!")
         
-    def show_info(self):
-        print ("watch: " + self.watch_name.get())
-        print ("inhib:" , self.inhib_period.get())
+    def get_info(self):
+        watch_name = self.watch_name.get()
+        watch_info = collection.get_watch_info( watch_name )
+        if watch_info is None:
+            print("Could not locate watch info!")
+            return
+        collection.set_current_watch( watch_name )
+        print ("watch: " + watch_info['name'] )
+        print ("inhib:"  + str( watch_info['inhib'] ) )  
+        print ("intsec:" + str( watch_info['int_seconds'] ) )  
+        self.inhib_period.set( watch_info['inhib'] )
+        self.intsec_entry.delete(0, END)
+        self.intsec_entry.insert(0, str(watch_info['int_seconds']) )
+        # TODO - limit?
 
+    def set_int_seconds( self ):
+        intsecs = float( self.intsec_entry.get() )
+        print("int seconds/cycle offset: {0:f}".format(intsecs) )
+        
+        watch_name = self.watch_name.get()
+        collection.set_current_watch_intsec( watch_name, intsecs )
+        collection.set_current_watch( watch_name )
+        
     # obsolete?
     def cancel(self):
         print ("cancel STUB")

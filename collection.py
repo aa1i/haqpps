@@ -1,3 +1,5 @@
+import pickle
+
 watch_info = []
     
 vhp_13_info = { "name":'Longines VHP PC "13" Cal L1.636.4 ETA 252.611 S/N 29206563',
@@ -49,4 +51,27 @@ watch_info.append(vhp_16_info)
 
 
 def get_current_watch_info():
-    return vhp_16_info
+    current = pickle.load( open( "current_watch.p", "rb" ) )
+    return current
+
+def set_current_watch( name ):
+    current = get_watch_info( name )
+    if current is not None:
+        pickle.dump( current, open( "current_watch.p", "wb" ) )
+    else:
+        print("Could not locate watch info!")
+
+def set_current_watch_intsec( name, intsec ):
+    current = get_watch_info( name )
+    if current is not None:
+        current['int_seconds']=intsec
+        pickle.dump( current, open( "current_watch.p", "wb" ) )
+    else:
+        print("Could not locate watch info!")
+
+def get_watch_info( name ):
+    for ind in range( len( watch_info ) ):
+        #print ("ind:{0:d} name:{1:s}".format( ind, watch_info[ind]['name']))
+        if name == watch_info[ind]['name']:
+          return watch_info[ind]
+    return None
