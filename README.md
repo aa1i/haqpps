@@ -137,6 +137,8 @@ create new "previous" cumulative (after terminating a measurement run):
 
 [ ] aids to concatenating offset files for cumulative plots.  Possible selection of base/current/cumulative file names
 
+[ ] support for watches with more than 1 tick per second (e.g. Bulova Precionist 8,16 BPS, Morgenwerk 3 BPS)
+
 ## known issues
 
 [ ] the first inhibition average seems to be skewed. Possibly a single zero sample leaking in, probably an off-by-one error somewhere.  It averages out in the long run, but short term averages are skewed by the error.
