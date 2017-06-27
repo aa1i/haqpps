@@ -106,7 +106,7 @@ class Haq:
     #   b: an entry in the tk GUI, possibly set from a: above
     #self.cycle=-1
     self.watch_info = collection.get_current_watch_info()
-    self.cycle = watch_info["int_seconds"]
+    self.cycle = self.watch_info["int_seconds"]
 
     self.filter_audio = True
     if self.filter_audio:
@@ -161,7 +161,7 @@ class Haq:
     # note: time may be off by as much as CHUNK/RATE seconds, but still useful as timestamp
     # sample_count is more accurate for computing time intervals in the stream,
     # but only when corrected for sound card rate error with avg_rate
-    sys.stdout.write( '{0:f} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f} {6:d} {7:f}\r'.format(
+    sys.stdout.write( '{0:f} {1:f} PPS {2:7d} {3:f} tic {4:7d} {5:f} {6:f} {7:f}\r'.format(
       time.time(), float(self.sample_count) / self.avg_rate,
       self.last_pps, self.last_pps_offset,
       self.last_tic, self.last_tic_offset,
