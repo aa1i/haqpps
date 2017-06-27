@@ -100,12 +100,18 @@ def run():
     global stream 
     p = pyaudio.PyAudio()
 
+    # from https://stackoverflow.com/questions/20760589/list-all-audio-devices-with-pythons-pyaudio-portaudio-binding
+    #for i in range(p.get_device_count()):
+    #    print( p.get_device_info_by_index(i) )
+
+    #print(p.get_default_input_device_info())
+
     stream = p.open(format=p.get_format_from_width(WIDTH),
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,
                     #output=True,
-                    #input_device_index=3,
+                    #input_device_index=0,
                     frames_per_buffer=CHUNK)
 
 
