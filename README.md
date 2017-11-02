@@ -38,6 +38,14 @@ Other methods require a lot of manual operation - stopwatch timing, or reviewing
 
 mostly builtins. Perhaps some basic Python package installtion? 
 
+### Debian installation
+
+- `apt-get install python3-tk`
+- `apt-get install python3-pyaudio python-pyaudio`
+- `apt-get install python3-matplotlib python3-matplotlib`
+- `apt-get install python3-scipy python-scipy`
+- `apt-get install python3-pickleshare python-pickleshare`
+
 ## Hardware
 
 - GPS with PPS (I used [Adafruit ultimate GPS breakout](https://www.adafruit.com/products/746) )

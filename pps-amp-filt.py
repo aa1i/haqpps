@@ -7,8 +7,9 @@ http://www.dk0tu.de/users/DL5BBN/Python_Amateur_Radio_Programs/
 Modified extensively 2016/Apr-May by John Isham (aa1i) <isham.john@gmail.com>
 """
 
+# Debian: apt-get install python3-pyaudio python-pyaudio
 import pyaudio
-#import struct
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation

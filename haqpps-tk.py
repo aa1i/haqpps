@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
 #import Tkinter as Tk
+# Debian: apt-get install python3-tk
 from tkinter import *
 from tkinter import ttk
+
+# Debian: apt-get install python3-pyaudio
 
 from time import sleep
 import time
